@@ -60,7 +60,6 @@
                     "correlation_analysis",
                     "saml"
                 ],
-                "domain_whitelist": [],
                 "is_member_join_email_enabled": true
             },
             "currentOrganizationLoading": false,
@@ -184,7 +183,6 @@
                         "correlation_analysis",
                         "saml"
                     ],
-                    "domain_whitelist": [],
                     "is_member_join_email_enabled": true
                 },
                 "organizations": [

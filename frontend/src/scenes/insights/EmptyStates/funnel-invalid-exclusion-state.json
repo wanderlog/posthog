@@ -83,7 +83,6 @@
                     "project_based_permissioning",
                     "saml"
                 ],
-                "domain_whitelist": [],
                 "is_member_join_email_enabled": true
             },
             "currentOrganizationLoading": false,
@@ -191,7 +190,6 @@
                         "project_based_permissioning",
                         "saml"
                     ],
-                    "domain_whitelist": [],
                     "is_member_join_email_enabled": true
                 },
                 "organizations": [

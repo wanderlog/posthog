@@ -548,7 +548,6 @@
                         }
                     ],
                     "available_features": [],
-                    "domain_whitelist": [],
                     "is_member_join_email_enabled": true,
                     "metadata": {
                         "taxonomy_set_events_count": 0,
@@ -594,7 +593,6 @@
                     }
                 ],
                 "available_features": [],
-                "domain_whitelist": [],
                 "is_member_join_email_enabled": true,
                 "metadata": {
                     "taxonomy_set_events_count": 0,
