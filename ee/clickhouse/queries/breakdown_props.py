@@ -61,7 +61,19 @@ def get_breakdown_prop_values(
     person_join_params: Dict = {}
     person_query = ClickhousePersonQuery(filter, team_id, column_optimizer=column_optimizer, entity=entity)
     if person_query.is_used:
-        person_subquery, person_join_params = person_query.get_query()
+        # Make the query more performant: adding a WHERE with
+        # entity_query, parsed_date_from, parsed_date_to makes sure that we
+        # only retrieve the `person` and `person_distinct_id` rows that are
+        # relevant to our query
+        entity_query = entity_format_params['entity_query']
+        extra_where = f"{entity_query} {parsed_date_from} {parsed_date_to}"
+        distinct_ids_query = get_team_distinct_ids_query(
+            team_id,
+            extra_where=f"AND distinct_id IN (SELECT distinct_id FROM event WHERE {extra_where})"
+        )
+        person_subquery, person_join_params = person_query.get_query(
+            extra_where=f"AND id IN (SELECT person_id FROM ({distinct_ids_query}))"
+        )
         person_join_clauses = f"""
             INNER JOIN ({get_team_distinct_ids_query(team_id)}) AS pdi ON e.distinct_id = pdi.distinct_id
             INNER JOIN ({person_subquery}) person ON pdi.person_id = person.id

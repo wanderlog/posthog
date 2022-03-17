@@ -114,15 +114,20 @@ class ClickhouseTrendsBreakdown:
                 lambda _: [],
             )
 
-        person_join_condition, person_join_params = self._person_join_condition()
+        breakdown_filter_params = {**breakdown_filter_params, **_breakdown_filter_params}
+        breakdown_filter = breakdown_filter.format(**breakdown_filter_params)
+
+        # If the breakdown_filter is in the form of "WHERE XXX"
+        # (true for everything but cohorts)
+        person_join_extra_where = f"{breakdown_filter_params['event_filter']} {breakdown_filter_params['actions_filter']} {breakdown_filter_params['parsed_date_from']} {breakdown_filter_params['parsed_date_to']}"
+
+        person_join_condition, person_join_params = self._person_join_condition(person_join_extra_where)
         groups_join_condition, groups_join_params = GroupsJoinQuery(
             self.filter, self.team_id, self.column_optimizer
         ).get_join_query()
         self.params = {**self.params, **_params, **person_join_params, **groups_join_params}
-        breakdown_filter_params = {**breakdown_filter_params, **_breakdown_filter_params}
 
         if self.filter.display in TRENDS_DISPLAY_BY_VALUE:
-            breakdown_filter = breakdown_filter.format(**breakdown_filter_params)
             content_sql = BREAKDOWN_AGGREGATE_QUERY_SQL.format(
                 breakdown_filter=breakdown_filter,
                 person_join=person_join_condition,
@@ -139,9 +144,6 @@ class ClickhouseTrendsBreakdown:
             )
 
         else:
-
-            breakdown_filter = breakdown_filter.format(**breakdown_filter_params)
-
             if self.entity.math in [WEEKLY_ACTIVE, MONTHLY_ACTIVE]:
                 active_user_params = get_active_user_params(self.filter, self.entity, self.team_id)
                 conditions = BREAKDOWN_ACTIVE_USER_CONDITIONS_SQL.format(
@@ -183,7 +185,7 @@ class ClickhouseTrendsBreakdown:
                 interval=interval_annotation, num_intervals=num_intervals, inner_sql=inner_sql,
             )
             self.params.update(
-                {"seconds_in_interval": seconds_in_interval, "num_intervals": num_intervals,}
+                {"seconds_in_interval": seconds_in_interval, "num_intervals": num_intervals, }
             )
 
             return breakdown_query, self.params, self._parse_trend_result(self.filter, self.entity)
@@ -328,13 +330,25 @@ class ClickhouseTrendsBreakdown:
         else:
             return str(value) or "none"
 
-    def _person_join_condition(self) -> Tuple[str, Dict]:
+    def _person_join_condition(self, extra_where: str) -> Tuple[str, Dict]:
         person_query = ClickhousePersonQuery(self.filter, self.team_id, self.column_optimizer, entity=self.entity)
+
+        # The extra_where here helps us fetch fewer rows from the
+        # person_distinct_id and person tables (so that we only get rows for
+        # users who performed the event in question)
+        #
+        # For an event performed 1000 times in a database with 10 million
+        # people, it speeds it up from taking 10s to about 0.5s in a 8vCPU,
+        # 128GB memory server
+        distinct_ids_query = get_team_distinct_ids_query(
+            self.team_id,
+            extra_where=f"AND distinct_id IN (SELECT distinct_id FROM event WHERE {extra_where})"
+        )
         event_join = EVENT_JOIN_PERSON_SQL.format(
-            GET_TEAM_PERSON_DISTINCT_IDS=get_team_distinct_ids_query(self.team_id)
+            GET_TEAM_PERSON_DISTINCT_IDS=distinct_ids_query
         )
         if person_query.is_used:
-            query, params = person_query.get_query()
+            query, params = person_query.get_query(extra_where=f"AND id IN (SELECT person_id FROM ({distinct_ids_query}))")
             return (
                 f"""
             {event_join}

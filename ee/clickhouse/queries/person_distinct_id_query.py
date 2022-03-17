@@ -8,7 +8,7 @@ from posthog.settings import BENCHMARK, TEST
 using_new_table = TEST or BENCHMARK
 
 
-def get_team_distinct_ids_query(team_id: int) -> str:
+def get_team_distinct_ids_query(team_id: int, extra_where: str = '') -> str:
     from ee.clickhouse.client import substitute_params
 
     global using_new_table
@@ -16,15 +16,23 @@ def get_team_distinct_ids_query(team_id: int) -> str:
     using_new_table = using_new_table or _fetch_person_distinct_id2_ready()
 
     if using_new_table:
-        return substitute_params(GET_TEAM_PERSON_DISTINCT_IDS_NEW_TABLE, {"team_id": team_id})
+        return substitute_params(GET_TEAM_PERSON_DISTINCT_IDS_NEW_TABLE, {
+            "team_id": team_id,
+            "extra_where": extra_where
+        })
     else:
-        return substitute_params(GET_TEAM_PERSON_DISTINCT_IDS, {"team_id": team_id})
+        return substitute_params(GET_TEAM_PERSON_DISTINCT_IDS, {
+            "team_id": team_id,
+            "extra_where": extra_where
+        })
 
 
 is_ready = False
 
 # :TRICKY: Avoid overly eagerly checking whether the migration is complete.
 # We instead cache negative responses for a minute and a positive one forever.
+
+
 def _fetch_person_distinct_id2_ready() -> bool:
     global is_ready
 
