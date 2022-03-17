@@ -46,7 +46,7 @@ class ClickhousePersonQuery:
         if self.PERSON_PROPERTIES_ALIAS in self._extra_fields:
             self._extra_fields = self._extra_fields - {self.PERSON_PROPERTIES_ALIAS} | {"properties"}
 
-    def get_query(self) -> Tuple[str, Dict]:
+    def get_query(self, extra_where="") -> Tuple[str, Dict]:
         fields = "id" + " ".join(
             f", argMax({column_name}, _timestamp) as {alias}" for column_name, alias in self._get_fields()
         )
@@ -57,7 +57,7 @@ class ClickhousePersonQuery:
             f"""
             SELECT {fields}
             FROM person
-            WHERE team_id = %(team_id)s
+            WHERE team_id = %(team_id)s {extra_where}
             GROUP BY id
             HAVING max(is_deleted) = 0 {person_filters}
         """,
