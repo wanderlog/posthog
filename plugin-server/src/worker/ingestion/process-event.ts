@@ -773,9 +773,8 @@ export class EventsProcessor {
                 )
                 return true
             } catch (error) {
-                if (!error.message || !error.message.includes('duplicate key value violates unique constraint')) {
-                    Sentry.captureException(error, { extra: { teamId, distinctId, timestamp, personUuid } })
-                }
+                Sentry.captureException(error, { extra: { teamId, distinctId, timestamp, personUuid } })
+                console.error(error.stack)
             }
         }
         return false
