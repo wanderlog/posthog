@@ -3,7 +3,13 @@
 !requirements.txt
 !requirements-dev.txt
 !posthog
-!plugin-server
+!plugin-server/package.json
+!plugin-server/yarn.lock
+!plugin-server/tsconfig.json
+!plugin-server/tsconfig.eslint.json
+!plugin-server/src
+!plugin-server/.eslintrc.js
+!plugin-server/.prettierrc
 !staticfiles
 !manage.py
 !gunicorn.config.py
