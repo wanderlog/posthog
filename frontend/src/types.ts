@@ -522,7 +522,13 @@ export type ActorType = PersonActorType | GroupActorType
 
 export interface CohortGroupType {
     id: string
+    /**
+     * Only one of (days) or (start_date, end_date) should be provided.
+     * `days` will take precedence if both are passed in
+     */
     days?: string
+    start_date?: string
+    end_date?: string
     action_id?: number
     event_id?: string
     label?: string

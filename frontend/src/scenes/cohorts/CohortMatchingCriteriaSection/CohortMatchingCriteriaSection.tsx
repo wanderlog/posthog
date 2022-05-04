@@ -5,7 +5,7 @@ import { CohortGroupType } from '~/types'
 import { PlusOutlined } from '@ant-design/icons'
 import { BuiltLogic, useActions, useValues } from 'kea'
 import { cohortLogicType } from '../cohortLogicType'
-import { PROPERTY_MATCH_TYPE } from 'lib/constants'
+import { makeCohortGroupType } from '../cohortGroupType'
 
 export function CohortMatchingCriteriaSection({ logic }: { logic: BuiltLogic<cohortLogicType> }): JSX.Element {
     const { setCohort, onCriteriaChange } = useActions(logic)
@@ -13,14 +13,7 @@ export function CohortMatchingCriteriaSection({ logic }: { logic: BuiltLogic<coh
     const onAddGroup = (): void => {
         setCohort({
             ...cohort,
-            groups: [
-                ...cohort.groups,
-                {
-                    id: Math.random().toString().substr(2, 5),
-                    matchType: PROPERTY_MATCH_TYPE,
-                    properties: [],
-                },
-            ],
+            groups: [...cohort.groups, makeCohortGroupType()],
         })
     }
     const onRemoveGroup = (index: number): void => {
