@@ -220,7 +220,7 @@ function DateIntervalSelect({
 }): JSX.Element {
     const valueOrDefault: string = value.days ?? ('1' as const)
 
-    const [shouldShowDatePicker, setShouldShowDayPicker] = useState(false)
+    const [shouldShowDatePicker, setShouldShowDayPicker] = useState(!!(value.start_date && value.end_date))
 
     const handleSelectChange = (newValue: string): void => {
         if (newValue === 'between') {

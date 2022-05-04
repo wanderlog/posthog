@@ -11,20 +11,34 @@ export default {
 } as ComponentMeta<typeof MatchCriteriaSelector>
 
 const props: MatchCriteriaSelectorWrapperProps = {
+    group: {
+        ...makeCohortGroupType(),
+        matchType: 'entities',
+    },
     onRemove: () => console.log('onRemove'),
 }
 
-export const Default = (): JSX.Element => {
+export const PerformedActionOrEvent = (): JSX.Element => {
     return <MatchCriteriaSelectorWrapper {...props} />
 }
 
-type MatchCriteriaSelectorWrapperProps = Omit<MatchCriteriaSelectorProps, 'group' | 'onCriteriaChange'>
+export const PerformedActionOrEventBetween = (): JSX.Element => {
+    return (
+        <MatchCriteriaSelectorWrapper
+            {...props}
+            group={{
+                ...props.group,
+                start_date: '2022-01-01',
+                end_date: '2022-01-05',
+            }}
+        />
+    )
+}
+
+type MatchCriteriaSelectorWrapperProps = Omit<MatchCriteriaSelectorProps, 'onCriteriaChange'>
 
 function MatchCriteriaSelectorWrapper(wrapperProps: MatchCriteriaSelectorWrapperProps): JSX.Element {
-    const [criteria, setCriteria] = useState<CohortGroupType>({
-        ...makeCohortGroupType(),
-        matchType: 'entities',
-    })
+    const [criteria, setCriteria] = useState<CohortGroupType>(wrapperProps.group)
 
     const handleCriteriaChange = (partial: Partial<CohortGroupType>): void => {
         console.log('criteria changed', partial)
