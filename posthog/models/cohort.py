@@ -50,8 +50,8 @@ class Group:
         self.days = days
         self.count = count
         self.count_operator = count_operator
-        self.start_date = relative_date_parse(start_date)
-        self.end_date = relative_date_parse(end_date)
+        self.start_date = datetime.strptime(start_date, "%Y-%m-%d") if type(start_date) == str else start_date
+        self.end_date = datetime.strptime(start_date, "%Y-%m-%d") if type(end_date) == str else end_date
 
     def to_dict(self) -> Dict[str, Any]:
         dup = self.__dict__.copy()

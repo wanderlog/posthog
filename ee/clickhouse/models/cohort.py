@@ -211,18 +211,25 @@ def parse_entity_timestamps_in_days(days: int) -> Tuple[str, Dict[str, str]]:
 
 
 def parse_cohort_timestamps(start_time: Optional[str], end_time: Optional[str]) -> Tuple[str, Dict[str, str]]:
-    clause = "AND "
+    clause = ""
     params: Dict[str, str] = {}
 
     if start_time:
-        clause += "timestamp >= %(date_from)s"
-
-        params = {"date_from": datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")}
+        clause += " AND timestamp >= %(date_from)s"
+        params = {**params, "date_from": parse_timestamp_str(start_time).strftime("%Y-%m-%d %H:%M:%S")}
     if end_time:
-        clause += "timestamp <= %(date_to)s"
-        params = {**params, "date_to": datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")}
+        clause += " AND timestamp <= %(date_to)s"
+        params = {**params, "date_to": parse_timestamp_str(end_time).strftime("%Y-%m-%d %H:%M:%S")}
 
-    return clause, params
+    return clause.strip(), params
+
+
+def parse_timestamp_str(time: str):
+    try:
+        return datetime.strptime(time, "%Y-%m-%dT%H:%M:%S")
+    except ValueError:
+        # Probably incorrect format; try just %Y-%m-%d
+        return datetime.strptime(time, "%Y-%m-%d")
 
 
 def is_precalculated_query(cohort: Cohort) -> bool:
