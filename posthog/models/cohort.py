@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import structlog
 from django.conf import settings
@@ -11,6 +11,7 @@ from django.utils import timezone
 from sentry_sdk import capture_exception
 
 from posthog.models.utils import sane_repr
+from posthog.utils import relative_date_parse
 
 from .person import Person
 
@@ -36,8 +37,8 @@ class Group:
         days: Optional[int] = None,
         count: Optional[int] = None,
         count_operator: Optional[Literal["eq", "lte", "gte"]] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: Optional[Union[str, datetime]] = None,
+        end_date: Optional[Union[str, datetime]] = None,
         label: Optional[str] = None,
     ):
         if not properties and not action_id and not event_id:
@@ -49,12 +50,13 @@ class Group:
         self.days = days
         self.count = count
         self.count_operator = count_operator
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_date = relative_date_parse(start_date)
+        self.end_date = relative_date_parse(end_date)
 
     def to_dict(self) -> Dict[str, Any]:
         dup = self.__dict__.copy()
         dup["start_date"] = self.start_date.isoformat() if self.start_date else self.start_date
+
         dup["end_date"] = self.end_date.isoformat() if self.end_date else self.end_date
         return dup
 
