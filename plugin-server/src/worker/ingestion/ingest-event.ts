@@ -6,6 +6,7 @@ import { Hub, IngestEventResponse } from '../../types'
 import { timeoutGuard } from '../../utils/db/utils'
 import { status } from '../../utils/status'
 import { Action } from './../../types'
+import { EventProcessingResult } from './process-event'
 import { generateEventDeadLetterQueueMessage } from './utils'
 
 export async function ingestEvent(hub: Hub, event: PluginEvent): Promise<IngestEventResponse> {
@@ -15,15 +16,30 @@ export async function ingestEvent(hub: Hub, event: PluginEvent): Promise<IngestE
     try {
         const { ip, site_url, team_id, now, sent_at, uuid } = event
         const distinctId = String(event.distinct_id)
-        const result = await hub.eventsProcessor.processEvent(
-            distinctId,
-            ip,
-            event,
-            team_id,
-            DateTime.fromISO(now),
-            sent_at ? DateTime.fromISO(sent_at) : null,
-            uuid! // it will throw if it's undefined
-        )
+        let result: EventProcessingResult | void
+        let success = false
+
+        const maxTries = 5
+        // Try a few times in case we're running into race conditions or intermittent errors
+        for (let i = 0; i < maxTries && !success; i++) {
+            try {
+                result = await hub.eventsProcessor.processEvent(
+                    distinctId,
+                    ip,
+                    event,
+                    team_id,
+                    DateTime.fromISO(now),
+                    sent_at ? DateTime.fromISO(sent_at) : null,
+                    uuid! // it will throw if it's undefined
+                )
+                success = true
+            } catch (innerError) {
+                status.debug('🍿', innerError)
+                if (i === maxTries - 1) {
+                    throw innerError
+                }
+            }
+        }
 
         let actionMatches: Action[] = []
 
