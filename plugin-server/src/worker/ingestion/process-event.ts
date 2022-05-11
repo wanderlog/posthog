@@ -234,7 +234,13 @@ export class EventsProcessor {
         properties: Properties,
         propertiesOnce: Properties
     ): Promise<void> {
-        const personFound = await this.db.fetchPerson(teamId, distinctId)
+        let personFound: Person | undefined
+
+        for (let i = 0; i < 3 && !personFound; i++) {
+            // Try up to 3 times, just in case there's a race condition
+            personFound = await this.db.fetchPerson(teamId, distinctId)
+        }
+
         if (!personFound) {
             throw new Error(
                 `Could not find person with distinct id "${distinctId}" in team "${teamId}" to update properties`
