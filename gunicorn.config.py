@@ -4,8 +4,8 @@
 
 loglevel = "error"
 keepalive = 120
-timeout = 90
-grateful_timeout = 120
+timeout = 900  # For very long queries, make the timeout exceed query time
+graceful_timeout = 120
 
 
 def on_starting(server):
