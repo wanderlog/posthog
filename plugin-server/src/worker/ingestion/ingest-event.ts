@@ -19,8 +19,10 @@ export async function ingestEvent(hub: Hub, event: PluginEvent): Promise<IngestE
         let result: EventProcessingResult | void
         let success = false
 
-        const maxTries = 5
+        const maxTries = 20
+        let delayUntilNextTryMs = 5
         // Try a few times in case we're running into race conditions or intermittent errors
+        // with exponential backoff
         for (let i = 0; i < maxTries && !success; i++) {
             try {
                 result = await hub.eventsProcessor.processEvent(
@@ -38,6 +40,8 @@ export async function ingestEvent(hub: Hub, event: PluginEvent): Promise<IngestE
                 if (i === maxTries - 1) {
                     throw innerError
                 }
+                await new Promise((resolve) => setTimeout(resolve, delayUntilNextTryMs))
+                delayUntilNextTryMs *= 2
             }
         }
 
